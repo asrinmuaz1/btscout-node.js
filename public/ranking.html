@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sıralama</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        table { width: 50%; margin: auto; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid black; }
+        .team-link { color: blue; text-decoration: underline; cursor: pointer; }
+        #teamDetails { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 2px solid black; z-index: 1000; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 999; }
+        button { margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Takım Sıralaması</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Takım No</th>
+                <th>Puan</th>
+                <th>En İyi Bölge</th>
+                <th>Otonom Yapabiliyor Mu?</th>
+            </tr>
+        </thead>
+        <tbody id="rankingTable"></tbody>
+    </table>
+    <br>
+    <button onclick="window.location.href='index.html'">Geri Dön</button>
+    <button onclick="resetRanking()">Sıralamayı Sıfırla</button>
+
+    <div id="overlay" onclick="hideDetails()"></div>
+    <div id="teamDetails"></div>
+
+    <script>
+        const BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://yourdomain.com';
+
+        function loadRanking() {
+            fetch(`${BASE_URL}/ranking`, { cache: "no-store" })
+                .then(response => {
+                    if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    const table = document.getElementById("rankingTable");
+                    table.innerHTML = "";
+                    data.forEach(team => {
+                        const autonomousText = team.autonomousCapable ? "Evet" : "Hayır";
+                        const row = `<tr>
+                            <td><span class="team-link" onclick="showDetails('${team.teamNumber}')">${team.teamNumber}</span></td>
+                            <td>${team.points}</td>
+                            <td>${team.topCategory}</td>
+                            <td>${autonomousText}</td>
+                        </tr>`;
+                        table.innerHTML += row;
+                    });
+                })
+                .catch(error => console.error("Error:", error));
+        }
+
+        function showDetails(teamNumber) {
+            fetch(`${BASE_URL}/ranking`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    const team = data.find(t => t.teamNumber === teamNumber);
+                    if (team) {
+                        const commentsList = team.comments.length > 0 
+                            ? team.comments.map(c => `<li>${c}</li>`).join("") 
+                            : "<li>Yorum yok</li>";
+                        document.getElementById("teamDetails").innerHTML = `
+                            <h2>Takım ${team.teamNumber} Detayları</h2>
+                            <p><strong>Puan:</strong> ${team.points}</p>
+                            <p><strong>En İyi Bölge:</strong> ${team.topCategory}</p>
+                            <p><strong>Otonom Yapabiliyor Mu?</strong> ${team.autonomousCapable ? "Evet" : "Hayır"}</p>
+                            <p><strong>Yorumlar:</strong></p>
+                            <ul>${commentsList}</ul>
+                            <button onclick="hideDetails()">Kapat</button>
+                        `;
+                        document.getElementById("teamDetails").style.display = "block";
+                        document.getElementById("overlay").style.display = "block";
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        }
+
+        function hideDetails() {
+            document.getElementById("teamDetails").style.display = "none";
+            document.getElementById("overlay").style.display = "none";
+        }
+
+        function resetRanking() {
+            const password = prompt("Sıralamayı sıfırlamak için şifreyi girin:");
+            if (password) {
+                fetch(`${BASE_URL}/reset`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    alert(data.message);
+                    if (data.message === "Ranking reset!") loadRanking();
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert(`Reset failed: ${error.message}`);
+                });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadRanking);
+    </script>
+</body>
+</html>

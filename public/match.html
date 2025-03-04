@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maç Girişi</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        input, button, textarea { padding: 10px; margin: 5px; font-size: 16px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Maç Sonucu Gir</h1>
+    <form id="matchForm">
+        <label for="teamNumber">Takım Numarası:</label>
+        <input type="number" id="teamNumber" name="teamNumber" required>
+        <br><br>
+
+        <label>Otonomda Obje Yerleştiriyor Mu?</label>
+        <input type="checkbox" id="autonomousObject" name="autonomousObject" onclick="toggleAutonomousFields()">
+        <br>
+
+        <label>Otonomda Bölgeden Çıktı Mı?</label>
+        <input type="checkbox" id="autonomousLeft" name="autonomousLeft">
+        <br><br>
+
+        <div id="autonomousSection" class="hidden">
+            <h3>Otonom Puanları (CORAL - REEF)</h3>
+            <label>L1 (Trough):</label>
+            <button type="button" onclick="adjustScore('os1', 3)">+3</button>
+            <button type="button" onclick="adjustScore('os1', -3)">-3</button>
+            <input type="hidden" id="os1" value="0">
+            <br>
+
+            <label>L2 (Branch):</label>
+            <button type="button" onclick="adjustScore('os2', 4)">+4</button>
+            <button type="button" onclick="adjustScore('os2', -4)">-4</button>
+            <input type="hidden" id="os2" value="0">
+            <br>
+
+            <label>L3 (Branch):</label>
+            <button type="button" onclick="adjustScore('os3', 6)">+6</button>
+            <button type="button" onclick="adjustScore('os3', -6)">-6</button>
+            <input type="hidden" id="os3" value="0">
+            <br>
+
+            <label>L4 (Branch):</label>
+            <button type="button" onclick="adjustScore('os4', 7)">+7</button>
+            <button type="button" onclick="adjustScore('os4', -7)">-7</button>
+            <input type="hidden" id="os4" value="0">
+            <br><br>
+        </div>
+
+        <h3>Teleop Puanları</h3>
+        <label>CORAL L1 (Trough):</label>
+        <button type="button" onclick="adjustScore('ts1', 2)">+2</button>
+        <button type="button" onclick="adjustScore('ts1', -2)">-2</button>
+        <input type="hidden" id="ts1" value="0">
+        <br>
+
+        <label>CORAL L2 (Branch):</label>
+        <button type="button" onclick="adjustScore('ts2', 3)">+3</button>
+        <button type="button" onclick="adjustScore('ts2', -3)">-3</button>
+        <input type="hidden" id="ts2" value="0">
+        <br>
+
+        <label>CORAL L3 (Branch):</label>
+        <button type="button" onclick="adjustScore('ts3', 4)">+4</button>
+        <button type="button" onclick="adjustScore('ts3', -4)">-4</button>
+        <input type="hidden" id="ts3" value="0">
+        <br>
+
+        <label>CORAL L4 (Branch):</label>
+        <button type="button" onclick="adjustScore('ts4', 5)">+5</button>
+        <button type="button" onclick="adjustScore('ts4', -5)">-5</button>
+        <input type="hidden" id="ts4" value="0">
+        <br><br>
+
+        <h3>ALGAE ve BARGE</h3>
+        <label>ALGAE (Processor):</label>
+        <button type="button" onclick="adjustScore('processor', 6)">+6</button>
+        <button type="button" onclick="adjustScore('processor', -6)">-6</button>
+        <input type="hidden" id="processor" value="0">
+        <br>
+
+        <label>ALGAE (Net):</label>
+        <button type="button" onclick="adjustScore('net', 4)">+4</button>
+        <button type="button" onclick="adjustScore('net', -4)">-4</button>
+        <input type="hidden" id="net" value="0">
+        <br>
+
+        <label>PARK (Barge Zone):</label>
+        <button type="button" onclick="adjustScore('park', 2)">+2</button>
+        <button type="button" onclick="adjustScore('park', -2)">-2</button>
+        <input type="hidden" id="park" value="0">
+        <br>
+
+        <label>Shallow CAGE:</label>
+        <button type="button" onclick="adjustScore('shallowCage', 6)">+6</button>
+        <button type="button" onclick="adjustScore('shallowCage', -6)">-6</button>
+        <input type="hidden" id="shallowCage" value="0">
+        <br>
+
+        <label>Deep CAGE:</label>
+        <button type="button" onclick="adjustScore('deepCage', 12)">+12</button>
+        <button type="button" onclick="adjustScore('deepCage', -12)">-12</button>
+        <input type="hidden" id="deepCage" value="0">
+        <br><br>
+
+        <label for="comment">Yorum:</label>
+        <textarea id="comment" name="comment" rows="4" cols="50" placeholder="Takım hakkında yorumunuzu buraya yazın"></textarea>
+        <br><br>
+
+        <p>Toplam Puan: <span id="totalScore">0</span></p>
+
+        <button type="submit">Kaydet</button>
+    </form>
+    <br>
+    <button onclick="window.location.href='index.html'">Geri Dön</button>
+
+    <script>
+        // Backend'in çalıştığı sabit URL (yerel geliştirme için)
+        const BASE_URL = 'http://localhost:3000'; // Backend portuna göre güncelleyin
+
+        function adjustScore(id, value) {
+            let input = document.getElementById(id);
+            let newValue = parseInt(input.value) + value;
+            if (newValue < 0) newValue = 0; // Negatif puanları engelle
+            input.value = newValue;
+            calculateScore();
+        }
+
+        function calculateScore() {
+            let total = 0;
+            const fields = ["os1", "os2", "os3", "os4", "ts1", "ts2", "ts3", "ts4", "processor", "net", "park", "shallowCage", "deepCage"];
+            fields.forEach(id => {
+                total += parseInt(document.getElementById(id).value);
+            });
+            if (document.getElementById("autonomousLeft").checked) total += 3; // Otonom çıkış bonusu
+            document.getElementById("totalScore").innerText = total;
+        }
+
+        function toggleAutonomousFields() {
+            let autonomousSection = document.getElementById("autonomousSection");
+            if (document.getElementById("autonomousObject").checked) {
+                autonomousSection.classList.remove("hidden");
+            } else {
+                autonomousSection.classList.add("hidden");
+            }
+        }
+
+        document.getElementById("matchForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            // Formdan verileri topla
+            const data = {
+                teamNumber: document.getElementById("teamNumber").value,
+                autonomousObject: document.getElementById("autonomousObject").checked,
+                autonomousLeft: document.getElementById("autonomousLeft").checked,
+                os1: document.getElementById("os1").value,
+                os2: document.getElementById("os2").value,
+                os3: document.getElementById("os3").value,
+                os4: document.getElementById("os4").value,
+                ts1: document.getElementById("ts1").value,
+                ts2: document.getElementById("ts2").value,
+                ts3: document.getElementById("ts3").value,
+                ts4: document.getElementById("ts4").value,
+                processor: document.getElementById("processor").value,
+                net: document.getElementById("net").value,
+                park: document.getElementById("park").value,
+                shallowCage: document.getElementById("shallowCage").value,
+                deepCage: document.getElementById("deepCage").value,
+                comment: document.getElementById("comment").value
+            };
+
+            // Gönderilecek veriyi ve URL'yi konsola yaz
+            console.log("Sending data to:", `${BASE_URL}/match`);
+            console.log("Data:", data);
+
+            // Backend'e veri gönder
+            fetch(`${BASE_URL}/match`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                console.log("Response status:", response.status); // Yanıt durumunu logla
+                if (!response.ok) {
+                    throw new Error(`Server response failed with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response data:", data); // Backend'den gelen yanıtı logla
+                alert("Maç kaydedildi!");
+                window.location.href = "ranking.html";
+            })
+            .catch(error => {
+                console.error("Fetch error:", error); // Hata detaylarını logla
+                alert(`Bir hata oluştu, maç kaydedilemedi: ${error.message}`);
+            });
+        });
+
+        // Otonom çıkış checkbox'ına puan güncelleme eventi ekle
+        document.getElementById("autonomousLeft").addEventListener("change", calculateScore);
+    </script>
+</body>
+</html>
