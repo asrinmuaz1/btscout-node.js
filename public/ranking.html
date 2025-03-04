@@ -35,85 +35,86 @@
     <div id="teamDetails"></div>
 
     <script>
-        const BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://yourdomain.com';
+        const BASE_URL = "http://localhost:3000"; // Backend URL'sini buraya göre ayarlayın
 
         function loadRanking() {
-            fetch(`${BASE_URL}/ranking`, { cache: "no-store" })
-                .then(response => {
-                    if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    const table = document.getElementById("rankingTable");
-                    table.innerHTML = "";
-                    data.forEach(team => {
-                        const autonomousText = team.autonomousCapable ? "Evet" : "Hayır";
-                        const row = `<tr>
-                            <td><span class="team-link" onclick="showDetails('${team.teamNumber}')">${team.teamNumber}</span></td>
-                            <td>${team.points}</td>
-                            <td>${team.topCategory}</td>
-                            <td>${autonomousText}</td>
-                        </tr>`;
-                        table.innerHTML += row;
-                    });
-                })
-                .catch(error => console.error("Error:", error));
+          fetch(`${BASE_URL}/ranking`, { cache: "no-store" })
+            .then((response) => {
+              if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
+              return response.json();
+            })
+            .then((data) => {
+              const table = document.getElementById("rankingTable");
+              table.innerHTML = "";
+              data.forEach((team) => {
+                const autonomousText = team.autonomousCapable ? "Evet" : "Hayır";
+                const row = `<tr>
+                    <td><span class="team-link" onclick="showDetails('${team.teamNumber}')">${team.teamNumber}</span></td>
+                    <td>${team.points}</td>
+                    <td>${team.topCategory}</td>
+                    <td>${autonomousText}</td>
+                </tr>`;
+                table.innerHTML += row;
+              });
+            })
+            .catch((error) => console.error("Error:", error));
         }
 
         function showDetails(teamNumber) {
-            fetch(`${BASE_URL}/ranking`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    const team = data.find(t => t.teamNumber === teamNumber);
-                    if (team) {
-                        const commentsList = team.comments.length > 0 
-                            ? team.comments.map(c => `<li>${c}</li>`).join("") 
-                            : "<li>Yorum yok</li>";
-                        document.getElementById("teamDetails").innerHTML = `
-                            <h2>Takım ${team.teamNumber} Detayları</h2>
-                            <p><strong>Puan:</strong> ${team.points}</p>
-                            <p><strong>En İyi Bölge:</strong> ${team.topCategory}</p>
-                            <p><strong>Otonom Yapabiliyor Mu?</strong> ${team.autonomousCapable ? "Evet" : "Hayır"}</p>
-                            <p><strong>Yorumlar:</strong></p>
-                            <ul>${commentsList}</ul>
-                            <button onclick="hideDetails()">Kapat</button>
-                        `;
-                        document.getElementById("teamDetails").style.display = "block";
-                        document.getElementById("overlay").style.display = "block";
-                    }
-                })
-                .catch(error => console.error("Error:", error));
+          fetch(`${BASE_URL}/ranking`)
+            .then((response) => {
+              if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
+              return response.json();
+            })
+            .then((data) => {
+              const team = data.find((t) => t.teamNumber === teamNumber);
+              if (team) {
+                const commentsList =
+                  team.comments.length > 0
+                    ? team.comments.map((c) => `<li>${c}</li>`).join("")
+                    : "<li>Yorum yok</li>";
+                document.getElementById("teamDetails").innerHTML = `
+                    <h2>Takım ${team.teamNumber} Detayları</h2>
+                    <p><strong>Puan:</strong> ${team.points}</p>
+                    <p><strong>En İyi Bölge:</strong> ${team.topCategory}</p>
+                    <p><strong>Otonom Yapabiliyor Mu?</strong> ${team.autonomousCapable ? "Evet" : "Hayır"}</p>
+                    <p><strong>Yorumlar:</strong></p>
+                    <ul>${commentsList}</ul>
+                    <button onclick="hideDetails()">Kapat</button>
+                `;
+                document.getElementById("teamDetails").style.display = "block";
+                document.getElementById("overlay").style.display = "block";
+              }
+            })
+            .catch((error) => console.error("Error:", error));
         }
 
         function hideDetails() {
-            document.getElementById("teamDetails").style.display = "none";
-            document.getElementById("overlay").style.display = "none";
+          document.getElementById("teamDetails").style.display = "none";
+          document.getElementById("overlay").style.display = "none";
         }
 
         function resetRanking() {
-            const password = prompt("Sıralamayı sıfırlamak için şifreyi girin:");
-            if (password) {
-                fetch(`${BASE_URL}/reset`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ password })
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    alert(data.message);
-                    if (data.message === "Ranking reset!") loadRanking();
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert(`Reset failed: ${error.message}`);
-                });
-            }
+          const password = prompt("Sıralamayı sıfırlamak için şifreyi girin:");
+          if (password) {
+            fetch(`${BASE_URL}/reset`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password }),
+            })
+              .then((response) => {
+                if (!response.ok) throw new Error(`Server response failed: ${response.status}`);
+                return response.json();
+              })
+              .then((data) => {
+                alert(data.message);
+                if (data.message === "Ranking reset!") loadRanking();
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert(`Reset failed: ${error.message}`);
+              });
+          }
         }
 
         document.addEventListener("DOMContentLoaded", loadRanking);

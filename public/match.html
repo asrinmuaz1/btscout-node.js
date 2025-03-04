@@ -120,89 +120,81 @@
     <button onclick="window.location.href='index.html'">Geri Dön</button>
 
     <script>
-        // Backend'in çalıştığı sabit URL (yerel geliştirme için)
-        const BASE_URL = 'http://localhost:3000'; // Backend portuna göre güncelleyin
+        const BASE_URL = "http://localhost:3000"; // Backend URL'sini buraya göre ayarlayın
 
         function adjustScore(id, value) {
-            let input = document.getElementById(id);
-            let newValue = parseInt(input.value) + value;
-            if (newValue < 0) newValue = 0; // Negatif puanları engelle
-            input.value = newValue;
-            calculateScore();
+          let input = document.getElementById(id);
+          let newValue = parseInt(input.value) + value;
+          if (newValue < 0) newValue = 0;
+          input.value = newValue;
+          calculateScore();
         }
 
         function calculateScore() {
-            let total = 0;
-            const fields = ["os1", "os2", "os3", "os4", "ts1", "ts2", "ts3", "ts4", "processor", "net", "park", "shallowCage", "deepCage"];
-            fields.forEach(id => {
-                total += parseInt(document.getElementById(id).value);
-            });
-            if (document.getElementById("autonomousLeft").checked) total += 3; // Otonom çıkış bonusu
-            document.getElementById("totalScore").innerText = total;
+          let total = 0;
+          const fields = ["os1", "os2", "os3", "os4", "ts1", "ts2", "ts3", "ts4", "processor", "net", "park", "shallowCage", "deepCage"];
+          fields.forEach((id) => {
+            total += parseInt(document.getElementById(id).value);
+          });
+          if (document.getElementById("autonomousLeft").checked) total += 3;
+          document.getElementById("totalScore").innerText = total;
         }
 
         function toggleAutonomousFields() {
-            let autonomousSection = document.getElementById("autonomousSection");
-            if (document.getElementById("autonomousObject").checked) {
-                autonomousSection.classList.remove("hidden");
-            } else {
-                autonomousSection.classList.add("hidden");
-            }
+          let autonomousSection = document.getElementById("autonomousSection");
+          if (document.getElementById("autonomousObject").checked) {
+            autonomousSection.classList.remove("hidden");
+          } else {
+            autonomousSection.classList.add("hidden");
+          }
         }
 
-        document.getElementById("matchForm").addEventListener("submit", function(event) {
-            event.preventDefault();
+        document.getElementById("matchForm").addEventListener("submit", function (event) {
+          event.preventDefault();
 
-            // Formdan verileri topla
-            const data = {
-                teamNumber: document.getElementById("teamNumber").value,
-                autonomousObject: document.getElementById("autonomousObject").checked,
-                autonomousLeft: document.getElementById("autonomousLeft").checked,
-                os1: document.getElementById("os1").value,
-                os2: document.getElementById("os2").value,
-                os3: document.getElementById("os3").value,
-                os4: document.getElementById("os4").value,
-                ts1: document.getElementById("ts1").value,
-                ts2: document.getElementById("ts2").value,
-                ts3: document.getElementById("ts3").value,
-                ts4: document.getElementById("ts4").value,
-                processor: document.getElementById("processor").value,
-                net: document.getElementById("net").value,
-                park: document.getElementById("park").value,
-                shallowCage: document.getElementById("shallowCage").value,
-                deepCage: document.getElementById("deepCage").value,
-                comment: document.getElementById("comment").value
-            };
+          const data = {
+            teamNumber: document.getElementById("teamNumber").value,
+            autonomousObject: document.getElementById("autonomousObject").checked,
+            autonomousLeft: document.getElementById("autonomousLeft").checked,
+            os1: document.getElementById("os1").value,
+            os2: document.getElementById("os2").value,
+            os3: document.getElementById("os3").value,
+            os4: document.getElementById("os4").value,
+            ts1: document.getElementById("ts1").value,
+            ts2: document.getElementById("ts2").value,
+            ts3: document.getElementById("ts3").value,
+            ts4: document.getElementById("ts4").value,
+            processor: document.getElementById("processor").value,
+            net: document.getElementById("net").value,
+            park: document.getElementById("park").value,
+            shallowCage: document.getElementById("shallowCage").value,
+            deepCage: document.getElementById("deepCage").value,
+            comment: document.getElementById("comment").value,
+          };
 
-            // Gönderilecek veriyi ve URL'yi konsola yaz
-            console.log("Sending data to:", `${BASE_URL}/match`);
-            console.log("Data:", data);
-
-            // Backend'e veri gönder
-            fetch(`${BASE_URL}/match`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
+          fetch(`${BASE_URL}/match`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then((err) => {
+                  throw new Error(err.message || `Server error: ${response.status}`);
+                });
+              }
+              return response.json();
             })
-            .then(response => {
-                console.log("Response status:", response.status); // Yanıt durumunu logla
-                if (!response.ok) {
-                    throw new Error(`Server response failed with status: ${response.status}`);
-                }
-                return response.json();
+            .then((data) => {
+              alert("Maç kaydedildi!");
+              window.location.href = "ranking.html";
             })
-            .then(data => {
-                console.log("Response data:", data); // Backend'den gelen yanıtı logla
-                alert("Maç kaydedildi!");
-                window.location.href = "ranking.html";
-            })
-            .catch(error => {
-                console.error("Fetch error:", error); // Hata detaylarını logla
-                alert(`Bir hata oluştu, maç kaydedilemedi: ${error.message}`);
+            .catch((error) => {
+              console.error("Fetch error:", error);
+              alert(`Maç kaydedilemedi: ${error.message}`);
             });
         });
 
-        // Otonom çıkış checkbox'ına puan güncelleme eventi ekle
         document.getElementById("autonomousLeft").addEventListener("change", calculateScore);
     </script>
 </body>
